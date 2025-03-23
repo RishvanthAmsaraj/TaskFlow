@@ -101,15 +101,14 @@ h1 {
 }
 
 .stats-section {
-    display: none;
     max-height: 0;
     opacity: 0;
+    overflow: hidden;
     transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .stats-section.active {
-    display: block;
-    max-height: 600px;
+    max-height: 1000px;
     opacity: 1;
 }
 
@@ -155,8 +154,21 @@ h1 {
 
 .chart-container {
     margin-top: 1rem;
+    padding: 1.5rem; /* Increased padding for more breathing room */
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
     display: flex;
     justify-content: center;
+    opacity: 0; /* Start with opacity 0 for fade-in animation */
+    transition: opacity 0.5s ease-in-out; /* Fade-in animation */
+}
+
+.chart-container.visible {
+    opacity: 1; /* Fade in when visible */
+}
+
+.dark-mode .chart-container {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 #productivity-chart {
