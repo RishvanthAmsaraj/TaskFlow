@@ -1,5 +1,4 @@
 let currentEditTaskId = null;
-let isEditExpanded = false;
 let isDarkMode = false;
 let isFiltersVisible = false;
 let isTrashVisible = false;
@@ -37,6 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     let deletedTasks = JSON.parse(localStorage.getItem('deletedTasks')) || [];
 
+    // Add isEditExpanded property to each task
+    tasks = tasks.map(task => ({
+        ...task,
+        isEditExpanded: task.isEditExpanded || false
+    }));
+
     // Load dark mode preference from localStorage
     isDarkMode = localStorage.getItem('darkMode') === 'true';
     document.body.classList.toggle('dark-mode', isDarkMode);
@@ -56,6 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTrash();
     updateProgress();
     updateTaskStats();
+
+    // Debug click events to identify unexpected listeners
+    document.addEventListener('click', (e) => {
+        console.log('Click event on:', e.target);
+    });
 
     // Ensure task input is focusable on Android
     taskInput.addEventListener('touchstart', () => {
@@ -96,7 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
             priority: document.getElementById('priority-input').value,
             completed: false,
             createdAt: new Date().toISOString(),
-            completedAt: null
+            completedAt: null,
+            isEditExpanded: false
         };
         tasks.push(task);
         saveTasks();
@@ -154,6 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         e.stopPropagation();
         console.log('Toggle Trash clicked');
+        // Blur any focused elements to prevent dropdown pop-ups
+        if (document.activeElement) document.activeElement.blur();
         isTrashVisible = !isTrashVisible;
         trashSection.classList.toggle('active', isTrashVisible);
         toggleTrash.textContent = isTrashVisible ? 'Hide Trash' : 'Show Trash';
@@ -189,10 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
 
-        filteredTasks.forEach(task => {
+        filteredTasks.forEach((task, index) => {
             const taskEl = document.createElement('div');
             taskEl.classList.add('task');
-            if (task === tasks[tasks.length - 1]) taskEl.classList.add('new-task');
+            // Only add new-task animation for newly added tasks
+            if (index === tasks.length - 1 && !task.isEditExpanded) {
+                taskEl.classList.add('new-task');
+            }
             taskEl.classList.add(task.priority);
             if (task.completed) taskEl.classList.add('completed');
             const overdueText = task.dueDate && new Date(task.dueDate) < new Date() ? '<span class="overdue-text">OVERDUE</span>' : '';
@@ -201,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleComplete(${task.id}, this.checked)">
                 <span>${displayText} [${task.category}] - Due: ${task.dueDate ? new Date(task.dueDate).toLocaleString() : 'No due date'} ${overdueText}</span>
                 <div class="task-description">${task.description}</div>
-                <div class="task-buttons">
+                <div class="task-buttons ${task.isEditExpanded ? 'expanded' : ''}">
                     <button class="toggle-description-btn" data-id="${task.id}">Toggle Description</button>
                     <button class="edit-btn" data-id="${task.id}">Edit</button>
                     <div class="edit-options">
@@ -220,8 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     toggleComplete(task.id, !task.completed);
                 }
             });
-
-            setTimeout(() => taskEl.classList.remove('new-task'), 500);
         });
     }
 
@@ -254,13 +268,33 @@ document.addEventListener('DOMContentLoaded', () => {
             trashTaskEl.innerHTML = `
                 <span>${task.text} [${task.category}]</span>
                 <div>
-                    <button onclick="restoreTask(${task.id})">Restore</button>
-                    <button onclick="permanentlyDeleteTask(${task.id})">Delete Permanently</button>
+                    <button class="restore-btn" data-id="${task.id}">Restore</button>
+                    <button class="delete-permanent-btn" data-id="${task.id}">Delete Permanently</button>
                 </div>
             `;
             trashList.appendChild(trashTaskEl);
         });
     }
+
+    // Add event delegation for trash buttons
+    trashList.addEventListener('click', (e) => {
+        const restoreBtn = e.target.closest('.restore-btn');
+        const deletePermanentBtn = e.target.closest('.delete-permanent-btn');
+
+        if (restoreBtn) {
+            const id = parseInt(restoreBtn.dataset.id);
+            console.log('Restore button clicked for task ID:', id);
+            restoreTask(id);
+            e.stopPropagation();
+        }
+
+        if (deletePermanentBtn) {
+            const id = parseInt(deletePermanentBtn.dataset.id);
+            console.log('Delete Permanently button clicked for task ID:', id);
+            permanentlyDeleteTask(id);
+            e.stopPropagation();
+        }
+    });
 
     // Toggle task completion
     window.toggleComplete = (id, checked) => {
@@ -281,9 +315,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toggle edit options
     window.toggleEditOptions = (id) => {
-        currentEditTaskId = id;
-        const taskButtons = document.querySelector(`.task:nth-child(${tasks.findIndex(t => t.id === id) + 1}) .task-buttons`);
-        isEditExpanded = !isEditExpanded;
+        const task = tasks.find(t => t.id === id);
+        task.isEditExpanded = !task.isEditExpanded;
+        saveTasks();
         renderTasks();
     };
 
@@ -388,6 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         e.stopPropagation();
         console.log('Toggle Dark Mode clicked');
+        // Blur any focused elements to prevent dropdown pop-ups
+        if (document.activeElement) document.activeElement.blur();
         isDarkMode = !isDarkMode;
         document.body.classList.toggle('dark-mode', isDarkMode);
         localStorage.setItem('darkMode', isDarkMode);
@@ -440,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Permanently delete task from trash
     window.permanentlyDeleteTask = (id) => {
-        deletedTasks = deletedTasks.filter(t => t.id === id);
+        deletedTasks = deletedTasks.filter(t => t.id !== id);
         saveDeletedTasks();
         renderTrash();
     };
