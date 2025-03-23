@@ -1,3 +1,26 @@
+/* Disable default touch highlights on Android */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Custom focus and active states for interactive elements */
+button:focus, button:active,
+input:focus, input:active,
+select:focus, select:active {
+    outline: none;
+    box-shadow: 0 0 8px rgba(255, 140, 102, 0.3);
+}
+
+/* Ensure inputs and selects are still selectable */
+input, select {
+    -webkit-user-select: auto;
+    user-select: auto;
+}
+
+/* Rest of the existing styles */
 * {
     margin: 0;
     padding: 0;
@@ -154,17 +177,17 @@ h1 {
 
 .chart-container {
     margin-top: 1rem;
-    padding: 1.5rem; /* Increased padding for more breathing room */
+    padding: 1.5rem;
     background: rgba(0, 0, 0, 0.02);
     border-radius: 12px;
     display: flex;
     justify-content: center;
-    opacity: 0; /* Start with opacity 0 for fade-in animation */
-    transition: opacity 0.5s ease-in-out; /* Fade-in animation */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
 }
 
 .chart-container.visible {
-    opacity: 1; /* Fade in when visible */
+    opacity: 1;
 }
 
 .dark-mode .chart-container {
@@ -202,6 +225,21 @@ h1 {
     box-shadow: 0 6px 25px rgba(255, 140, 102, 0.2);
 }
 
+/* Add styling for #task-form h3 to match .filter-section h3 */
+#task-form h3 {
+    color: #ff8c66;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.filter-section h3 {
+    color: #ff8c66;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
 .toggle-filters {
     display: none;
 }
@@ -216,13 +254,6 @@ h1 {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-}
-
-.filter-section h3 {
-    color: #ff8c66;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-    font-weight: 600;
 }
 
 #clear-filters {
