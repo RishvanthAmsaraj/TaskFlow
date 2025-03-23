@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleFilters = document.getElementById('toggle-filters');
     const filterContent = document.getElementById('filter-content');
     const taskInput = document.getElementById('task-input');
+    const addTaskBtn = document.getElementById('add-task-btn');
     const toggleTrash = document.getElementById('toggle-trash');
     const trashSection = document.getElementById('trash-section');
     const trashList = document.getElementById('trash-list');
@@ -61,9 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
         taskInput.focus();
     });
 
-    // Add task
+    // Add task - Form submission
     taskForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        console.log('Form submitted');
+        addTask();
+    });
+
+    // Fallback for Android - Click event on Add Task button
+    addTaskBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Add Task button clicked');
+        addTask();
+    });
+
+    // Function to handle adding a task
+    function addTask() {
         const taskTitle = taskInput.value.trim();
         
         console.log('Task Title on Submit:', taskTitle);
@@ -92,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTaskStats();
         taskForm.reset();
         scheduleNotification(task);
-    });
+    }
 
     // Filter tasks
     filterCategory.addEventListener('change', (e) => {
@@ -113,7 +127,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTasks();
     });
 
-    clearFilters.addEventListener('click', () => {
+    clearFilters.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Clear Filters clicked');
         filters = { category: '', priority: '', status: '' };
         filterCategory.value = '';
         filterPriority.value = '';
@@ -123,14 +140,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Toggle filters section on mobile
-    toggleFilters.addEventListener('click', () => {
+    toggleFilters.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Toggle Filters clicked');
         isFiltersVisible = !isFiltersVisible;
         filterContent.classList.toggle('active', isFiltersVisible);
         toggleFilters.textContent = isFiltersVisible ? 'Hide Filters' : 'Show Filters';
     });
 
     // Toggle trash section
-    toggleTrash.addEventListener('click', () => {
+    toggleTrash.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Toggle Trash clicked');
         isTrashVisible = !isTrashVisible;
         trashSection.classList.toggle('active', isTrashVisible);
         toggleTrash.textContent = isTrashVisible ? 'Hide Trash' : 'Show Trash';
@@ -364,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleDarkMode.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        console.log('Toggle Dark Mode clicked');
         isDarkMode = !isDarkMode;
         document.body.classList.toggle('dark-mode', isDarkMode);
         localStorage.setItem('darkMode', isDarkMode);
@@ -416,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Permanently delete task from trash
     window.permanentlyDeleteTask = (id) => {
-        deletedTasks = deletedTasks.filter(t => t.id !== id);
+        deletedTasks = deletedTasks.filter(t => t.id === id);
         saveDeletedTasks();
         renderTrash();
     };
