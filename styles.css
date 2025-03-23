@@ -103,7 +103,7 @@ h1 {
     color: #f5f5f7;
 }
 
-/* Updated styles for task stats to ensure alignment */
+/* Styles for task stats */
 .task-stats {
     display: flex;
     gap: 1rem;
@@ -120,7 +120,7 @@ h1 {
     flex: 1;
     text-align: center;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    min-height: 100px; /* Ensure consistent height */
+    min-height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -138,9 +138,9 @@ h1 {
 .stat-box h3 {
     color: #ff8c66;
     margin-bottom: 0.5rem;
-    font-size: 1.1rem; /* Slightly smaller font to fit on one line */
+    font-size: 1.1rem;
     font-weight: 600;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
 }
 
 .stat-box span {
@@ -160,10 +160,9 @@ h1 {
     border: none;
     border-radius: 12px;
     cursor: pointer;
-    margin: 0.5rem 0;
+    margin-bottom: 1rem;
     display: block;
     width: 100%;
-    max-width: 1200px;
     text-align: center;
     font-weight: 500;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -296,9 +295,10 @@ button:hover {
     border: none;
     border-radius: 12px;
     cursor: pointer;
-    margin: 0.5rem 0;
+    margin-top: 1rem;
+    display: block;
     width: 100%;
-    max-width: 1200px;
+    text-align: center;
     font-weight: 500;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
@@ -427,6 +427,10 @@ button:hover {
     margin-top: 0.5rem;
 }
 
+.task-buttons.expanded .edit-options {
+    display: flex;
+}
+
 .edit-options button {
     background: rgba(0, 0, 0, 0.05);
     padding: 0.5rem 1rem;
@@ -444,10 +448,6 @@ button:hover {
     color: #fff;
     transform: scale(1.02);
     box-shadow: 0 4px 15px rgba(255, 140, 102, 0.3);
-}
-
-.task-buttons.expanded .edit-options {
-    display: flex;
 }
 
 /* Styles for the trash section */
@@ -521,7 +521,7 @@ button:hover {
 }
 
 .modal-content {
-    background: rgba(255, Dropdowns255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 1.5rem;
