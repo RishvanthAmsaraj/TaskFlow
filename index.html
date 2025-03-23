@@ -14,14 +14,14 @@
             <div id="progress-fill"></div>
             <span id="progress-percent">0%</span>
         </div>
-        <!-- Simplified stats section with two boxes -->
+        <!-- Simplified stats section with renamed labels -->
         <div class="task-stats">
             <div class="stat-box">
-                <h3>Completed Tasks</h3>
+                <h3>Completed</h3>
                 <span id="completed-tasks">0</span>
             </div>
             <div class="stat-box">
-                <h3>Tasks Left</h3>
+                <h3>To-Do</h3>
                 <span id="tasks-left">0</span>
             </div>
         </div>
@@ -66,15 +66,15 @@
             </div>
         </div>
         <div id="task-list"></div>
-        <!-- Trash section -->
+        <!-- Trash section with toggle button inside the container -->
+        <button id="toggle-trash" class="toggle-trash">Show Trash</button>
         <div id="trash-section" class="trash-section">
             <h3>Deleted Tasks</h3>
             <div id="trash-list"></div>
         </div>
+        <!-- Move toggle-dark-mode button back inside the container -->
+        <button id="toggle-dark-mode">Toggle Dark Mode</button>
     </div>
-    <!-- Move toggle buttons outside the container -->
-    <button id="toggle-dark-mode">Toggle Dark Mode</button>
-    <button id="toggle-trash" class="toggle-trash">Show Trash</button>
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close">×</span>
