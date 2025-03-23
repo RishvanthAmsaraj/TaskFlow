@@ -35,6 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const productivityChart = document.getElementById('productivity-chart').getContext('2d');
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
+    // Load dark mode preference from localStorage
+    isDarkMode = localStorage.getItem('darkMode') === 'true';
+    document.body.classList.toggle('dark-mode', isDarkMode);
+
     // Load filter state from localStorage
     const savedFilters = JSON.parse(localStorage.getItem('filters')) || {};
     filters = { ...filters, ...savedFilters };
@@ -57,13 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
         statsSection.classList.toggle('active', isStatsVisible);
         toggleStats.textContent = isStatsVisible ? 'Hide Stats' : 'Show Stats';
         if (isStatsVisible) {
-            // Wait for the animation to complete (0.5s) before drawing the chart
             setTimeout(() => {
                 drawProductivityChart();
-                chartContainer.classList.add('visible'); // Trigger fade-in
+                chartContainer.classList.add('visible');
             }, 500);
         } else {
-            chartContainer.classList.remove('visible'); // Trigger fade-out
+            chartContainer.classList.remove('visible');
         }
     });
 
@@ -145,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
         taskList.innerHTML = '';
         let filteredTasks = tasks;
 
-        // Apply filters
         if (filters.category) {
             filteredTasks = filteredTasks.filter(task => task.category === filters.category);
         }
@@ -170,8 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${task.text} [${task.category}] - Due: ${task.dueDate ? new Date(task.dueDate).toLocaleString() : 'No due date'} ${overdueText}</span>
                 <div class="task-description">${task.description}</div>
                 <div class="task-buttons">
-                    <button onclick="toggleDescription(${task.id})">Toggle Description</button>
-                    <button onclick="toggleEditOptions(${task.id})">Edit</button>
+                    <button class="toggle-description-btn" data-id="${task.id}">Toggle Description</button>
+                    <button class="edit-btn" data-id="${task.id}">Edit</button>
                     <div class="edit-options">
                         <button onclick="editText(${task.id})">Edit Text</button>
                         <button onclick="editDescription(${task.id})">Edit Description</button>
@@ -183,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             taskList.appendChild(taskEl);
 
-            // Make task clickable to toggle completion
             taskEl.addEventListener('click', (e) => {
                 if (!e.target.closest('.task-buttons') && e.target.type !== 'checkbox') {
                     toggleComplete(task.id, !task.completed);
@@ -192,6 +193,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setTimeout(() => taskEl.classList.remove('new-task'), 500);
         });
+
+        // Add event delegation for edit buttons and toggle description buttons
+        taskList.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-btn');
+            const toggleDescBtn = e.target.closest('.toggle-description-btn');
+            
+            if (editBtn) {
+                const id = parseInt(editBtn.dataset.id);
+                toggleEditOptions(id);
+                e.stopPropagation();
+            }
+            
+            if (toggleDescBtn) {
+                const id = parseInt(toggleDescBtn.dataset.id);
+                toggleDescription(id);
+                e.stopPropagation();
+            }
+        }, { once: true }); // Use { once: true } to avoid multiple listeners
     }
 
     // Toggle task completion
@@ -332,23 +351,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const maxTasks = Math.max(...completedPerDay, 5); // Minimum scale of 5 for better visibility
+        const maxTasks = Math.max(...completedPerDay, 5);
         const ctx = productivityChart;
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-        // Enable anti-aliasing
         ctx.imageSmoothingEnabled = true;
 
-        // Constants for chart layout
-        const padding = 50; // Increased padding for more breathing room
+        const padding = 50;
         const chartHeight = canvasHeight - padding * 2;
         const chartWidth = canvasWidth - padding * 2;
         const yAxisSteps = 5;
         const xAxisPoints = 7;
 
-        // Draw axes
         ctx.strokeStyle = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -357,7 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineTo(canvasWidth - padding, canvasHeight - padding);
         ctx.stroke();
 
-        // Draw Y-axis labels
         ctx.font = '12px Inter';
         ctx.fillStyle = isDarkMode ? 'rgba(245, 245, 247, 0.6)' : 'rgba(29, 29, 31, 0.6)';
         ctx.textAlign = 'right';
@@ -368,14 +383,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillText(value, padding - 15, y);
         }
 
-        // Draw X-axis labels
         ctx.textAlign = 'center';
         days.forEach((day, i) => {
             const x = padding + (i * chartWidth) / (xAxisPoints - 1);
             ctx.fillText(day, x, canvasHeight - padding + 25);
         });
 
-        // Draw the line
         const points = completedPerDay.map((count, i) => {
             const x = padding + (i * chartWidth) / (xAxisPoints - 1);
             const y = canvasHeight - padding - (count / maxTasks) * chartHeight;
@@ -384,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.beginPath();
         ctx.strokeStyle = '#ff8c66';
-        ctx.lineWidth = 4; // Thicker line for sharpness
+        ctx.lineWidth = 4;
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
         ctx.moveTo(points[0].x, points[0].y);
@@ -393,10 +406,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         ctx.stroke();
 
-        // Draw small data points
         points.forEach(point => {
             ctx.beginPath();
-            ctx.arc(point.x, point.y, 3, 0, Math.PI * 2); // Smaller points
+            ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
             ctx.fillStyle = '#ff8c66';
             ctx.fill();
         });
@@ -406,6 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleDarkMode.addEventListener('click', () => {
         isDarkMode = !isDarkMode;
         document.body.classList.toggle('dark-mode', isDarkMode);
+        localStorage.setItem('darkMode', isDarkMode);
         renderTasks();
         drawProductivityChart();
     });
