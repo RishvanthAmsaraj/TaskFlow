@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Disable WebView's force dark mode -->
     <meta name="color-scheme" content="light dark">
     <title>TaskFlow</title>
     <link rel="stylesheet" href="styles.css">
@@ -15,21 +14,15 @@
             <div id="progress-fill"></div>
             <span id="progress-percent">0%</span>
         </div>
-        <button id="toggle-stats" class="toggle-stats">Show Stats</button>
-        <div id="stats-section" class="stats-section">
-            <div class="stats-content">
-                <h3>Weekly Stats</h3>
-                <div class="stats-row">
-                    <span>Completed This Week:</span>
-                    <span id="completed-this-week">0</span>
-                </div>
-                <div class="stats-row">
-                    <span>Uncompleted Tasks:</span>
-                    <span id="uncompleted-tasks">0</span>
-                </div>
-                <div class="chart-container">
-                    <canvas id="productivity-chart"></canvas>
-                </div>
+        <!-- Simplified stats section with two boxes -->
+        <div class="task-stats">
+            <div class="stat-box">
+                <h3>Completed Tasks</h3>
+                <span id="completed-tasks">0</span>
+            </div>
+            <div class="stat-box">
+                <h3>Tasks Left</h3>
+                <span id="tasks-left">0</span>
             </div>
         </div>
         <div class="main-content">
@@ -73,11 +66,18 @@
             </div>
         </div>
         <div id="task-list"></div>
-        <button id="toggle-dark-mode">Toggle Dark Mode</button>
+        <!-- Trash section -->
+        <button id="toggle-trash" class="toggle-trash">Show Trash</button>
+        <div id="trash-section" class="trash-section">
+            <h3>Deleted Tasks</h3>
+            <div id="trash-list"></div>
+        </div>
     </div>
+    <!-- Move toggle-dark-mode button outside the container -->
+    <button id="toggle-dark-mode">Toggle Dark Mode</button>
     <div id="modal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close">×</span>
             <h2 id="modal-title"></h2>
             <input type="text" id="modal-input">
             <input type="datetime-local" id="modal-due-date">
