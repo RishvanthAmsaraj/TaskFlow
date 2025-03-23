@@ -25,14 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressFill = document.getElementById('progress-fill');
     const completedThisWeekEl = document.getElementById('completed-this-week');
     const uncompletedTasksEl = document.getElementById('uncompleted-tasks');
-    const avgCompletionTimeEl = document.getElementById('avg-completion-time');
-    const productivityChart = document.getElementById('productivity-chart').getContext('2d');
     const filterCategory = document.getElementById('filter-category');
     const filterPriority = document.getElementById('filter-priority');
     const filterStatus = document.getElementById('filter-status');
     const clearFilters = document.getElementById('clear-filters');
     const toggleFilters = document.getElementById('toggle-filters');
     const filterContent = document.getElementById('filter-content');
+    const chartContainer = document.querySelector('.chart-container');
+    const productivityChart = document.getElementById('productivity-chart').getContext('2d');
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
     // Load filter state from localStorage
@@ -56,6 +56,15 @@ document.addEventListener('DOMContentLoaded', () => {
         isStatsVisible = !isStatsVisible;
         statsSection.classList.toggle('active', isStatsVisible);
         toggleStats.textContent = isStatsVisible ? 'Hide Stats' : 'Show Stats';
+        if (isStatsVisible) {
+            // Wait for the animation to complete (0.5s) before drawing the chart
+            setTimeout(() => {
+                drawProductivityChart();
+                chartContainer.classList.add('visible'); // Trigger fade-in
+            }, 500);
+        } else {
+            chartContainer.classList.remove('visible'); // Trigger fade-out
+        }
     });
 
     // Toggle filters section on mobile
@@ -303,16 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const uncompletedTasks = tasks.filter(t => !t.completed).length;
         completedThisWeekEl.textContent = completedThisWeek;
         uncompletedTasksEl.textContent = uncompletedTasks;
-
-        const completedTasks = tasks.filter(t => t.completed && t.completedAt && t.createdAt);
-        const avgTime = completedTasks.length > 0
-            ? completedTasks.reduce((sum, t) => {
-                const created = new Date(t.createdAt).getTime();
-                const completed = new Date(t.completedAt).getTime();
-                return sum + (completed - created);
-            }, 0) / completedTasks.length / 1000 / 60
-            : 0;
-        avgCompletionTimeEl.textContent = `${Math.round(avgTime)} minutes`;
     }
 
     // Draw productivity chart
@@ -333,68 +332,71 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const maxTasks = Math.max(...completedPerDay, 4);
+        const maxTasks = Math.max(...completedPerDay, 5); // Minimum scale of 5 for better visibility
         const ctx = productivityChart;
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
+        // Enable anti-aliasing
         ctx.imageSmoothingEnabled = true;
 
+        // Constants for chart layout
+        const padding = 50; // Increased padding for more breathing room
+        const chartHeight = canvasHeight - padding * 2;
+        const chartWidth = canvasWidth - padding * 2;
+        const yAxisSteps = 5;
+        const xAxisPoints = 7;
+
+        // Draw axes
         ctx.strokeStyle = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
         ctx.lineWidth = 1;
-        for (let i = 1; i <= 4; i++) {
-            ctx.beginPath();
-            ctx.moveTo(40, 150 - i * 30);
-            ctx.lineTo(canvasWidth - 40, 150 - i * 30);
-            ctx.stroke();
-        }
-        for (let i = 1; i < 7; i++) {
-            ctx.beginPath();
-            ctx.moveTo(40 + i * ((canvasWidth - 80) / 6), 20);
-            ctx.lineTo(40 + i * ((canvasWidth - 80) / 6), 150);
-            ctx.stroke();
-        }
-
-        ctx.strokeStyle = isDarkMode ? '#f5f5f7' : '#1d1d1f';
-        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(40, 20);
-        ctx.lineTo(40, 150);
-        ctx.lineTo(canvasWidth - 40, 150);
+        ctx.moveTo(padding, padding);
+        ctx.lineTo(padding, canvasHeight - padding);
+        ctx.lineTo(canvasWidth - padding, canvasHeight - padding);
         ctx.stroke();
 
+        // Draw Y-axis labels
         ctx.font = '12px Inter';
-        ctx.fillStyle = isDarkMode ? '#f5f5f7' : '#1d1d1f';
+        ctx.fillStyle = isDarkMode ? 'rgba(245, 245, 247, 0.6)' : 'rgba(29, 29, 31, 0.6)';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i <= yAxisSteps; i++) {
+            const value = Math.round((maxTasks * (yAxisSteps - i)) / yAxisSteps);
+            const y = padding + (i * chartHeight) / yAxisSteps;
+            ctx.fillText(value, padding - 15, y);
+        }
+
+        // Draw X-axis labels
         ctx.textAlign = 'center';
         days.forEach((day, i) => {
-            ctx.fillText(day, 40 + i * ((canvasWidth - 80) / 6) + ((canvasWidth - 80) / 12), 170);
+            const x = padding + (i * chartWidth) / (xAxisPoints - 1);
+            ctx.fillText(day, x, canvasHeight - padding + 25);
         });
-        ctx.textAlign = 'right';
-        for (let i = 0; i <= 4; i++) {
-            ctx.fillText(i, 30, 150 - i * 30 + 5);
-        }
+
+        // Draw the line
+        const points = completedPerDay.map((count, i) => {
+            const x = padding + (i * chartWidth) / (xAxisPoints - 1);
+            const y = canvasHeight - padding - (count / maxTasks) * chartHeight;
+            return { x, y };
+        });
 
         ctx.beginPath();
         ctx.strokeStyle = '#ff8c66';
-        ctx.fillStyle = 'rgba(255, 140, 102, 0.2)';
-        ctx.lineWidth = 3;
-        ctx.moveTo(40, 150);
-        completedPerDay.forEach((count, i) => {
-            const x = 40 + i * ((canvasWidth - 80) / 6) + ((canvasWidth - 80) / 12);
-            const y = 150 - (count / maxTasks) * 130;
-            ctx.lineTo(x, y);
-        });
-        ctx.lineTo(canvasWidth - 40, 150);
-        ctx.closePath();
-        ctx.fill();
+        ctx.lineWidth = 4; // Thicker line for sharpness
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
         ctx.stroke();
 
-        completedPerDay.forEach((count, i) => {
-            const x = 40 + i * ((canvasWidth - 80) / 6) + ((canvasWidth - 80) / 12);
-            const y = 150 - (count / maxTasks) * 130;
+        // Draw small data points
+        points.forEach(point => {
             ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.arc(point.x, point.y, 3, 0, Math.PI * 2); // Smaller points
             ctx.fillStyle = '#ff8c66';
             ctx.fill();
         });
