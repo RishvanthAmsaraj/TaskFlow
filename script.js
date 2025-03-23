@@ -1,8 +1,8 @@
 let currentEditTaskId = null;
 let isEditExpanded = false;
 let isDarkMode = false;
-let isStatsVisible = false;
 let isFiltersVisible = false;
+let isTrashVisible = false;
 let filters = {
     category: '',
     priority: '',
@@ -19,21 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalSave = document.getElementById('modal-save');
     const closeModal = document.querySelector('.close');
     const toggleDarkMode = document.getElementById('toggle-dark-mode');
-    const toggleStats = document.getElementById('toggle-stats');
-    const statsSection = document.getElementById('stats-section');
     const progressPercent = document.getElementById('progress-percent');
     const progressFill = document.getElementById('progress-fill');
-    const completedThisWeekEl = document.getElementById('completed-this-week');
-    const uncompletedTasksEl = document.getElementById('uncompleted-tasks');
+    const completedTasksEl = document.getElementById('completed-tasks');
+    const tasksLeftEl = document.getElementById('tasks-left');
     const filterCategory = document.getElementById('filter-category');
     const filterPriority = document.getElementById('filter-priority');
     const filterStatus = document.getElementById('filter-status');
     const clearFilters = document.getElementById('clear-filters');
     const toggleFilters = document.getElementById('toggle-filters');
     const filterContent = document.getElementById('filter-content');
-    const chartContainer = document.querySelector('.chart-container');
-    const productivityChart = document.getElementById('productivity-chart').getContext('2d');
+    const taskInput = document.getElementById('task-input');
+    const toggleTrash = document.getElementById('toggle-trash');
+    const trashSection = document.getElementById('trash-section');
+    const trashList = document.getElementById('trash-list');
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let deletedTasks = JSON.parse(localStorage.getItem('deletedTasks')) || [];
 
     // Load dark mode preference from localStorage
     isDarkMode = localStorage.getItem('darkMode') === 'true';
@@ -51,38 +52,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load existing tasks and update UI
     populateCategoryFilter();
     renderTasks();
+    renderTrash();
     updateProgress();
-    updateStats();
-    drawProductivityChart();
+    updateTaskStats();
 
-    // Toggle stats section
-    toggleStats.addEventListener('click', () => {
-        isStatsVisible = !isStatsVisible;
-        statsSection.classList.toggle('active', isStatsVisible);
-        toggleStats.textContent = isStatsVisible ? 'Hide Stats' : 'Show Stats';
-        if (isStatsVisible) {
-            setTimeout(() => {
-                drawProductivityChart();
-                chartContainer.classList.add('visible');
-            }, 500);
-        } else {
-            chartContainer.classList.remove('visible');
-        }
-    });
-
-    // Toggle filters section on mobile
-    toggleFilters.addEventListener('click', () => {
-        isFiltersVisible = !isFiltersVisible;
-        filterContent.classList.toggle('active', isFiltersVisible);
-        toggleFilters.textContent = isFiltersVisible ? 'Hide Filters' : 'Show Filters';
+    // Ensure task input is focusable on Android
+    taskInput.addEventListener('touchstart', () => {
+        taskInput.focus();
     });
 
     // Add task
     taskForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        const taskTitle = taskInput.value.trim();
+        
+        console.log('Task Title on Submit:', taskTitle);
+
+        if (!taskTitle) {
+            alert('Please enter a task title.');
+            return;
+        }
+
         const task = {
             id: Date.now(),
-            text: document.getElementById('task-input').value,
+            text: taskTitle,
             description: document.getElementById('task-description').value || '',
             category: document.getElementById('category-input').value,
             dueDate: document.getElementById('due-date-input').value,
@@ -96,8 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         populateCategoryFilter();
         renderTasks();
         updateProgress();
-        updateStats();
-        drawProductivityChart();
+        updateTaskStats();
         taskForm.reset();
         scheduleNotification(task);
     });
@@ -128,6 +120,20 @@ document.addEventListener('DOMContentLoaded', () => {
         filterStatus.value = '';
         saveFilters();
         renderTasks();
+    });
+
+    // Toggle filters section on mobile
+    toggleFilters.addEventListener('click', () => {
+        isFiltersVisible = !isFiltersVisible;
+        filterContent.classList.toggle('active', isFiltersVisible);
+        toggleFilters.textContent = isFiltersVisible ? 'Hide Filters' : 'Show Filters';
+    });
+
+    // Toggle trash section
+    toggleTrash.addEventListener('click', () => {
+        isTrashVisible = !isTrashVisible;
+        trashSection.classList.toggle('active', isTrashVisible);
+        toggleTrash.textContent = isTrashVisible ? 'Hide Trash' : 'Show Trash';
     });
 
     // Populate category filter dropdown
@@ -167,9 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
             taskEl.classList.add(task.priority);
             if (task.completed) taskEl.classList.add('completed');
             const overdueText = task.dueDate && new Date(task.dueDate) < new Date() ? '<span class="overdue-text">OVERDUE</span>' : '';
+            const displayText = task.text || 'Untitled Task';
             taskEl.innerHTML = `
                 <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleComplete(${task.id}, this.checked)">
-                <span>${task.text} [${task.category}] - Due: ${task.dueDate ? new Date(task.dueDate).toLocaleString() : 'No due date'} ${overdueText}</span>
+                <span>${displayText} [${task.category}] - Due: ${task.dueDate ? new Date(task.dueDate).toLocaleString() : 'No due date'} ${overdueText}</span>
                 <div class="task-description">${task.description}</div>
                 <div class="task-buttons">
                     <button class="toggle-description-btn" data-id="${task.id}">Toggle Description</button>
@@ -193,24 +200,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setTimeout(() => taskEl.classList.remove('new-task'), 500);
         });
+    }
 
-        // Add event delegation for edit buttons and toggle description buttons
-        taskList.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-btn');
-            const toggleDescBtn = e.target.closest('.toggle-description-btn');
-            
-            if (editBtn) {
-                const id = parseInt(editBtn.dataset.id);
-                toggleEditOptions(id);
-                e.stopPropagation();
-            }
-            
-            if (toggleDescBtn) {
-                const id = parseInt(toggleDescBtn.dataset.id);
-                toggleDescription(id);
-                e.stopPropagation();
-            }
-        }, { once: true }); // Use { once: true } to avoid multiple listeners
+    // Add event delegation for edit and toggle description buttons
+    taskList.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-btn');
+        const toggleDescBtn = e.target.closest('.toggle-description-btn');
+        
+        if (editBtn) {
+            const id = parseInt(editBtn.dataset.id);
+            console.log('Edit button clicked for task ID:', id);
+            toggleEditOptions(id);
+            e.stopPropagation();
+        }
+        
+        if (toggleDescBtn) {
+            const id = parseInt(toggleDescBtn.dataset.id);
+            console.log('Toggle Description button clicked for task ID:', id);
+            toggleDescription(id);
+            e.stopPropagation();
+        }
+    });
+
+    // Render deleted tasks in the trash
+    function renderTrash() {
+        trashList.innerHTML = '';
+        deletedTasks.forEach(task => {
+            const trashTaskEl = document.createElement('div');
+            trashTaskEl.classList.add('trash-task');
+            trashTaskEl.innerHTML = `
+                <span>${task.text} [${task.category}]</span>
+                <div>
+                    <button onclick="restoreTask(${task.id})">Restore</button>
+                    <button onclick="permanentlyDeleteTask(${task.id})">Delete Permanently</button>
+                </div>
+            `;
+            trashList.appendChild(trashTaskEl);
+        });
     }
 
     // Toggle task completion
@@ -221,8 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveTasks();
         renderTasks();
         updateProgress();
-        updateStats();
-        drawProductivityChart();
+        updateTaskStats();
     };
 
     // Toggle description dropdown
@@ -299,14 +324,18 @@ document.addEventListener('DOMContentLoaded', () => {
         saveTasks();
         renderTasks();
         updateProgress();
-        updateStats();
-        drawProductivityChart();
+        updateTaskStats();
         modal.style.display = 'none';
     });
 
     // Save tasks to localStorage
     function saveTasks() {
         localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // Save deleted tasks to localStorage
+    function saveDeletedTasks() {
+        localStorage.setItem('deletedTasks', JSON.stringify(deletedTasks));
     }
 
     // Save filters to localStorage
@@ -323,104 +352,22 @@ document.addEventListener('DOMContentLoaded', () => {
         progressFill.style.width = `${percent}%`;
     }
 
-    // Update stats
-    function updateStats() {
-        const now = new Date();
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const completedThisWeek = tasks.filter(t => t.completed && new Date(t.completedAt) >= oneWeekAgo).length;
-        const uncompletedTasks = tasks.filter(t => !t.completed).length;
-        completedThisWeekEl.textContent = completedThisWeek;
-        uncompletedTasksEl.textContent = uncompletedTasks;
-    }
-
-    // Draw productivity chart
-    function drawProductivityChart() {
-        const now = new Date();
-        const days = Array(7).fill(0).map((_, i) => {
-            const date = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
-            return date.toLocaleDateString('en-US', { weekday: 'short' });
-        });
-        const completedPerDay = Array(7).fill(0);
-        tasks.forEach(task => {
-            if (task.completed && task.completedAt) {
-                const completedDate = new Date(task.completedAt);
-                const daysAgo = Math.floor((now - completedDate) / (24 * 60 * 60 * 1000));
-                if (daysAgo >= 0 && daysAgo < 7) {
-                    completedPerDay[6 - daysAgo]++;
-                }
-            }
-        });
-
-        const maxTasks = Math.max(...completedPerDay, 5);
-        const ctx = productivityChart;
-        const canvasWidth = ctx.canvas.width;
-        const canvasHeight = ctx.canvas.height;
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-        ctx.imageSmoothingEnabled = true;
-
-        const padding = 50;
-        const chartHeight = canvasHeight - padding * 2;
-        const chartWidth = canvasWidth - padding * 2;
-        const yAxisSteps = 5;
-        const xAxisPoints = 7;
-
-        ctx.strokeStyle = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(padding, padding);
-        ctx.lineTo(padding, canvasHeight - padding);
-        ctx.lineTo(canvasWidth - padding, canvasHeight - padding);
-        ctx.stroke();
-
-        ctx.font = '12px Inter';
-        ctx.fillStyle = isDarkMode ? 'rgba(245, 245, 247, 0.6)' : 'rgba(29, 29, 31, 0.6)';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        for (let i = 0; i <= yAxisSteps; i++) {
-            const value = Math.round((maxTasks * (yAxisSteps - i)) / yAxisSteps);
-            const y = padding + (i * chartHeight) / yAxisSteps;
-            ctx.fillText(value, padding - 15, y);
-        }
-
-        ctx.textAlign = 'center';
-        days.forEach((day, i) => {
-            const x = padding + (i * chartWidth) / (xAxisPoints - 1);
-            ctx.fillText(day, x, canvasHeight - padding + 25);
-        });
-
-        const points = completedPerDay.map((count, i) => {
-            const x = padding + (i * chartWidth) / (xAxisPoints - 1);
-            const y = canvasHeight - padding - (count / maxTasks) * chartHeight;
-            return { x, y };
-        });
-
-        ctx.beginPath();
-        ctx.strokeStyle = '#ff8c66';
-        ctx.lineWidth = 4;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.moveTo(points[0].x, points[0].y);
-        for (let i = 1; i < points.length; i++) {
-            ctx.lineTo(points[i].x, points[i].y);
-        }
-        ctx.stroke();
-
-        points.forEach(point => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#ff8c66';
-            ctx.fill();
-        });
+    // Update task stats (completed and remaining tasks)
+    function updateTaskStats() {
+        const completedTasks = tasks.filter(t => t.completed).length;
+        const tasksLeft = tasks.length - completedTasks;
+        completedTasksEl.textContent = completedTasks;
+        tasksLeftEl.textContent = tasksLeft;
     }
 
     // Toggle dark mode
-    toggleDarkMode.addEventListener('click', () => {
+    toggleDarkMode.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         isDarkMode = !isDarkMode;
         document.body.classList.toggle('dark-mode', isDarkMode);
         localStorage.setItem('darkMode', isDarkMode);
         renderTasks();
-        drawProductivityChart();
     });
 
     // Close modal
@@ -435,19 +382,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Delete task with animation
+    // Delete task (move to trash)
     window.deleteTask = (id) => {
         const taskEl = document.querySelector(`.task:nth-child(${tasks.findIndex(t => t.id === id) + 1})`);
         taskEl.classList.add('removing-task');
         setTimeout(() => {
+            const task = tasks.find(t => t.id === id);
+            deletedTasks.push(task);
             tasks = tasks.filter(t => t.id !== id);
             saveTasks();
+            saveDeletedTasks();
             populateCategoryFilter();
             renderTasks();
+            renderTrash();
             updateProgress();
-            updateStats();
-            drawProductivityChart();
+            updateTaskStats();
         }, 500);
+    };
+
+    // Restore task from trash
+    window.restoreTask = (id) => {
+        const task = deletedTasks.find(t => t.id === id);
+        tasks.push(task);
+        deletedTasks = deletedTasks.filter(t => t.id !== id);
+        saveTasks();
+        saveDeletedTasks();
+        populateCategoryFilter();
+        renderTasks();
+        renderTrash();
+        updateProgress();
+        updateTaskStats();
+    };
+
+    // Permanently delete task from trash
+    window.permanentlyDeleteTask = (id) => {
+        deletedTasks = deletedTasks.filter(t => t.id !== id);
+        saveDeletedTasks();
+        renderTrash();
     };
 
     // Schedule browser notification
