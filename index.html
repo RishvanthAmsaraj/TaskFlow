@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>TaskFlow</h1>
+        <div class="progress-bar">
+            <span>Progress: <span id="progress-percent">0%</span></span>
+            <div id="progress-fill"></div>
+        </div>
+        <button id="toggle-stats" class="toggle-stats">Show Stats</button>
+        <div id="stats-section" class="stats-section">
+            <div class="stats-content">
+                <h3>Completion Stats</h3>
+                <div class="stats-row">
+                    <span>Completed This Week:</span>
+                    <span id="completed-this-week">0</span>
+                </div>
+                <div class="stats-row">
+                    <span>Uncompleted Tasks:</span>
+                    <span id="uncompleted-tasks">0</span>
+                </div>
+                <div class="stats-row">
+                    <span>Average Completion Time:</span>
+                    <span id="avg-completion-time">0 minutes</span>
+                </div>
+                <h3>Productivity Trends (Last 7 Days)</h3>
+                <div class="chart-container">
+                    <canvas id="productivity-chart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="main-content">
+            <form id="task-form">
+                <div class="form-group">
+                    <input type="text" id="task-input" placeholder="Add a task..." required>
+                    <input type="text" id="task-description" placeholder="Add a description...">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="category-input" placeholder="Enter category..." required>
+                    <input type="datetime-local" id="due-date-input">
+                </div>
+                <div class="form-group">
+                    <select id="priority-input">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                    <button type="submit">Add Task</button>
+                </div>
+            </form>
+            <div class="filter-section">
+                <button id="toggle-filters" class="toggle-filters">Show Filters</button>
+                <div id="filter-content" class="filter-content">
+                    <h3>Filter Tasks</h3>
+                    <div class="form-group">
+                        <select id="filter-category">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select id="filter-priority">
+                            <option value="">All Priorities</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                        <select id="filter-status">
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="uncompleted">Uncompleted</option>
+                        </select>
+                    </div>
+                    <button id="clear-filters">Clear Filters</button>
+                </div>
+            </div>
+        </div>
+        <div id="task-list"></div>
+        <button id="toggle-dark-mode">Toggle Dark Mode</button>
+    </div>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2 id="modal-title"></h2>
+            <input type="text" id="modal-input" placeholder="Enter new value...">
+            <input type="datetime-local" id="modal-due-date" style="display:none;">
+            <button id="modal-save">Save</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
