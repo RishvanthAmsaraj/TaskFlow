@@ -38,7 +38,7 @@
                         <option value="medium">Medium</option>
                         <option value="high">High</option>
                     </select>
-                    <button type="submit">Add Task</button>
+                    <button type="submit" id="add-task-btn">Add Task</button>
                 </div>
             </form>
             <div class="filter-section">
@@ -67,14 +67,14 @@
         </div>
         <div id="task-list"></div>
         <!-- Trash section -->
-        <button id="toggle-trash" class="toggle-trash">Show Trash</button>
         <div id="trash-section" class="trash-section">
             <h3>Deleted Tasks</h3>
             <div id="trash-list"></div>
         </div>
     </div>
-    <!-- Move toggle-dark-mode button outside the container -->
+    <!-- Move toggle buttons outside the container -->
     <button id="toggle-dark-mode">Toggle Dark Mode</button>
+    <button id="toggle-trash" class="toggle-trash">Show Trash</button>
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close">×</span>
