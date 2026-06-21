@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0A0F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>TaskFlow</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23FF6B35'/%3E%3Cpath d='M30 52 L45 67 L70 38' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-logo">
+        <svg width="64" height="64" viewBox="0 0 100 100">
+          <rect width="100" height="100" rx="22" fill="#FF6B35"/>
+          <path d="M30 52 L45 67 L70 38" stroke="white" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="loading-text">TaskFlow</div>
+      <div class="loading-bar">
+        <div class="loading-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 100 100">
+            <rect width="100" height="100" rx="22" fill="#FF6B35"/>
+            <path d="M30 52 L45 67 L70 38" stroke="white" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="logo-text">TaskFlow</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" id="stats-toggle" title="Statistics">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        </button>
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Greeting & Date -->
+    <section class="greeting-section">
+      <h1 id="greeting">Good afternoon</h1>
+      <p id="date-display"></p>
+    </section>
+
+    <!-- Progress Card -->
+    <section class="progress-card">
+      <div class="progress-header">
+        <span class="progress-label">Today's Progress</span>
+        <span class="progress-percent" id="progress-text">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-bar" style="width: 0%"></div>
+      </div>
+      <div class="progress-stats">
+        <div class="p-stat">
+          <span class="p-number" id="stat-completed">0</span>
+          <span class="p-label">Done</span>
+        </div>
+        <div class="p-stat">
+          <span class="p-number" id="stat-remaining">0</span>
+          <span class="p-label">Left</span>
+        </div>
+        <div class="p-stat">
+          <span class="p-number" id="stat-streak">0</span>
+          <span class="p-label">Streak</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+      <button class="action-chip" id="btn-templates">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Templates
+      </button>
+      <button class="action-chip" id="btn-focus">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Focus
+      </button>
+      <button class="action-chip" id="btn-voice">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        Voice
+      </button>
+    </section>
+
+    <!-- Add Task -->
+    <section class="add-task-section">
+      <div class="add-task-card">
+        <input type="text" id="task-input" placeholder="What do you need to do?" autocomplete="off">
+        <div class="add-task-row">
+          <select id="task-priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+          <input type="text" id="task-category" placeholder="Category" list="category-list">
+          <datalist id="category-list">
+            <option value="Work">
+            <option value="Personal">
+            <option value="Health">
+            <option value="Shopping">
+            <option value="Learning">
+          </datalist>
+          <input type="datetime-local" id="task-due">
+          <button class="btn-primary" id="btn-add">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters-section">
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="active">Active</button>
+        <button class="filter-tab" data-filter="completed">Done</button>
+        <button class="filter-tab" data-filter="high">High Priority</button>
+      </div>
+    </section>
+
+    <!-- Task List -->
+    <section class="task-list-section">
+      <div id="tasks-container"></div>
+    </section>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <div class="empty-illustration">
+        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+          <circle cx="60" cy="60" r="50" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
+          <path d="M45 62 L55 72 L75 48" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+        </svg>
+      </div>
+      <h3>All caught up!</h3>
+      <p>Add a task to get started</p>
+    </div>
+
+    <!-- Trash Toggle -->
+    <section class="trash-section">
+      <button class="trash-toggle" id="btn-trash">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        Deleted Tasks
+        <span class="trash-count" id="trash-count">0</span>
+      </button>
+      <div class="trash-content" id="trash-content"></div>
+    </section>
+  </div>
+
+  <!-- Focus Modal -->
+  <div class="modal-overlay" id="focus-modal" style="display: none;">
+    <div class="modal focus-modal">
+      <div class="modal-header">
+        <h2>Focus Mode</h2>
+        <button class="modal-close" data-close>&times;</button>
+      </div>
+      <div class="focus-setup" id="focus-setup">
+        <p class="focus-desc">Select a task to focus on</p>
+        <div class="focus-task-list" id="focus-task-list"></div>
+        <div class="focus-settings">
+          <label>Work duration</label>
+          <div class="duration-picker">
+            <button class="dur-btn" data-min="15">15</button>
+            <button class="dur-btn active" data-min="25">25</button>
+            <button class="dur-btn" data-min="45">45</button>
+            <button class="dur-btn" data-min="60">60</button>
+          </div>
+          <div class="custom-duration">
+            <label>Or set custom (minutes)</label>
+            <input type="number" id="custom-duration" min="1" max="180" value="25" placeholder="25">
+          </div>
+        </div>
+      </div>
+      <div class="focus-active" id="focus-active" style="display: none;">
+        <div class="focus-task-name" id="focus-task-name"></div>
+        <div class="focus-timer" id="focus-timer">25:00</div>
+        <div class="focus-progress">
+          <div class="focus-progress-bar" id="focus-progress-bar"></div>
+        </div>
+        <div class="focus-controls">
+          <button class="btn-secondary" id="focus-pause">Pause</button>
+          <button class="btn-danger" id="focus-stop">Stop</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates Modal -->
+  <div class="modal-overlay" id="templates-modal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Templates</h2>
+        <button class="modal-close" data-close>&times;</button>
+      </div>
+      <div class="templates-grid" id="templates-grid"></div>
+    </div>
+  </div>
+
+  <!-- Stats Modal -->
+  <div class="modal-overlay" id="stats-modal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Your Stats</h2>
+        <button class="modal-close" data-close>&times;</button>
+      </div>
+      <div class="stats-content" id="stats-content"></div>
+    </div>
+  </div>
+
+  <!-- Voice Modal -->
+  <div class="modal-overlay" id="voice-modal" style="display: none;">
+    <div class="modal voice-modal">
+      <div class="voice-header">
+        <h3>🎤 Voice Input</h3>
+        <p class="voice-hint">Say something like:<br><em>"Buy milk tomorrow high priority"</em></p>
+      </div>
+      <div class="voice-visualizer" id="voice-visualizer">
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+      </div>
+      <div class="voice-transcript" id="voice-transcript"></div>
+      <p class="voice-status" id="voice-status-text">Tap Start to begin</p>
+      
+      <!-- Processing Indicator -->
+      <div class="voice-processing" id="voice-processing" style="display: none;">
+        <div class="processing-spinner"></div>
+        <span>Processing...</span>
+      </div>
+      
+      <div class="voice-controls">
+        <button class="btn-primary voice-mic-btn" id="voice-toggle">🎤 Start Listening</button>
+        <button class="btn-secondary" id="voice-stop">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast-container"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

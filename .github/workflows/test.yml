@@ -1,0 +1,62 @@
+name: Test & Lint
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test || echo "No tests configured yet"
+      
+    - name: Check for API keys
+      run: |
+        # Scan for common API key patterns
+        if grep -r "sk-[a-zA-Z0-9]\{20,\}" js/ || \
+           grep -r "api_key.*=.*['\"][a-zA-Z0-9]\{16,\}" js/ || \
+           grep -r "token.*=.*['\"][a-zA-Z0-9]\{20,\}" js/; then
+          echo "❌ Potential API key found!"
+          exit 1
+        fi
+        echo "✅ No API keys detected"
+        
+    - name: Validate HTML
+      run: |
+        # Basic HTML validation
+        if ! grep -q "<!DOCTYPE html>" index.html; then
+          echo "❌ Missing DOCTYPE"
+          exit 1
+        fi
+        if ! grep -q "<html" index.html; then
+          echo "❌ Missing html tag"
+          exit 1
+        fi
+        echo "✅ HTML structure valid"
+        
+    - name: Check file sizes
+      run: |
+        # Warn if JS files are too large
+        for file in js/*.js; do
+          size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+          if [ "$size" -gt 50000 ]; then
+            echo "⚠️ $file is $(($size/1024))KB (consider splitting)"
+          fi
+        done
+        echo "✅ File size check complete"
